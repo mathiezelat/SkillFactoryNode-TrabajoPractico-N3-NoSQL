@@ -20,7 +20,9 @@ const createNewPost = async newPost => {
 
 	if (categories) {
 		const { connect } = categories
+
 		newPost.categories = []
+
 		for (const { id } of connect) {
 			newPost.categories.push(id)
 		}
@@ -38,10 +40,13 @@ const createNewPost = async newPost => {
 		const categoriesByIds = await Category.find({
 			_id: { $in: newPost.categories },
 		})
-		for (const category of categoriesByIds) {
-			category.posts.push(createdPost)
-			await category.save()
-		}
+
+		await Promise.all(
+			categoriesByIds.map(async category => {
+				category.posts.push(createdPost)
+				return await category.save()
+			})
+		)
 	}
 
 	userById.posts.push(createdPost)
